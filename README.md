@@ -13,7 +13,7 @@ python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 export DATABASE_URI=sqlite:////tmp/accounts.db
-flask --app service run --host 0.0.0.0 --port 8080
+flask run --host 0.0.0.0 --port 8080
 ```
 
 For PostgreSQL set `DATABASE_URI=postgresql://USER:PASSWORD@HOST:5432/accounts`. GitHub Actions tests against PostgreSQL.
