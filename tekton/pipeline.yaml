@@ -1,38 +1,130 @@
-#
-# This pipeline needs the following tasks from Tekton Catalog
-#   - git-clone
-#   - flake8
-#
----
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: Pipeline
-metadata:  
+metadata:
   name: cd-pipeline
 spec:
-  workspaces:
-    - name: pipeline-workspace
   params:
     - name: repo-url
+      type: string
     - name: branch
+      type: string
       default: main
+    - name: image
+      type: string
+      default: capstone-registry:5000/accounts:latest
+  workspaces:
+    - name: pipeline-workspace
   tasks:
-    - name: init
+    - name: clone
+      params:
+        - name: url
+          value: $(params.repo-url)
+        - name: revision
+          value: $(params.branch)
       workspaces:
         - name: source
-          workspace: pipeline-workspace          
-      taskRef:
-        name: cleanup
-
-    - name: clone
+          workspace: pipeline-workspace
+      taskSpec:
+        params:
+          - name: url
+          - name: revision
+        workspaces:
+          - name: source
+        steps:
+          - name: git-clone
+            image: alpine/git:latest
+            script: |
+              #!/bin/sh
+              set -eu
+              git clone --depth 1 --branch "$(params.revision)" "$(params.url)" "$(workspaces.source.path)/source"
+              cd "$(workspaces.source.path)/source"
+              git log -1 --oneline
+    - name: lint
+      runAfter: [clone]
       workspaces:
-        - name: output
-          workspace: pipeline-workspace          
-      taskRef:
-        name: git-clone
+        - name: source
+          workspace: pipeline-workspace
+      taskSpec:
+        workspaces:
+          - name: source
+        steps:
+          - name: flake8
+            image: python:3.9-slim
+            workingDir: $(workspaces.source.path)/source
+            script: |
+              #!/bin/sh
+              set -eu
+              pip install --disable-pip-version-check flake8==4.0.1
+              flake8 service tests --count --show-source --statistics
+    - name: tests
+      runAfter: [lint]
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+      taskSpec:
+        workspaces:
+          - name: source
+        steps:
+          - name: nosetests
+            image: python:3.9-slim
+            workingDir: $(workspaces.source.path)/source
+            env:
+              - name: DATABASE_URI
+                value: 'sqlite:///:memory:'
+            script: |
+              #!/bin/sh
+              set -eu
+              pip install --disable-pip-version-check -r requirements.txt
+              nosetests -vv -s tests/test_cli_commands.py tests/test_common.py tests/test_models.py tests/test_routes.py
+    - name: build
+      runAfter: [tests]
       params:
-      - name: url
-        value: $(params.repo-url)
-      - name: revision
-        value: $(params.branch)
-      runAfter:
-        - init
+        - name: image
+          value: $(params.image)
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+      taskSpec:
+        params:
+          - name: image
+        workspaces:
+          - name: source
+        steps:
+          - name: build-and-push
+            image: gcr.io/kaniko-project/executor:v1.23.2
+            args:
+              - --context=dir://$(workspaces.source.path)/source
+              - --dockerfile=$(workspaces.source.path)/source/Dockerfile
+              - --destination=$(params.image)
+              - --insecure
+              - --cache=false
+    - name: deploy
+      runAfter: [build]
+      params:
+        - name: image
+          value: $(params.image)
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+      taskSpec:
+        params:
+          - name: image
+        workspaces:
+          - name: source
+        steps:
+          - name: apply-manifests
+            image: registry.k8s.io/kubectl:v1.35.0
+            command: [kubectl]
+            args: [apply, -f, '$(workspaces.source.path)/source/deploy/']
+          - name: deploy-image
+            image: registry.k8s.io/kubectl:v1.35.0
+            command: [kubectl]
+            args: [set, image, deployment/accounts, 'accounts=$(params.image)']
+          - name: verify-rollout
+            image: registry.k8s.io/kubectl:v1.35.0
+            command: [kubectl]
+            args: [rollout, status, deployment/accounts, --timeout=180s]
+          - name: deployment-details
+            image: registry.k8s.io/kubectl:v1.35.0
+            command: [kubectl]
+            args: [get, 'deployment,pods,replicasets,services', -l, app=accounts, -o, wide]

@@ -1,0 +1,25 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: cd-pipeline-run-
+spec:
+  pipelineRef:
+    name: cd-pipeline
+  params:
+    - name: repo-url
+      value: https://github.com/Soham-Moholkar/github-final-project.git
+    - name: branch
+      value: main
+    - name: image
+      value: capstone-registry:5000/accounts:latest
+  taskRunTemplate:
+    serviceAccountName: pipeline
+  workspaces:
+    - name: pipeline-workspace
+      volumeClaimTemplate:
+        spec:
+          storageClassName: standard
+          accessModes: [ReadWriteOnce]
+          resources:
+            requests:
+              storage: 1Gi
