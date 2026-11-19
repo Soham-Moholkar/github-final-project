@@ -8,7 +8,7 @@ Evidence reviewed: 19 November 2026
 >
 > **Verified capstone CI result:** 33 tests passed · 98% reported coverage · 0 Flake8 findings. These results describe one recorded CI execution, not production performance.
 
-**Jump to** [Project map](#2-project-map) · [All 15 courses](#3-all-15-courses-in-the-case-study) · [Accounts API](#4-main-implementation-customer-accounts-service) · [Delivery pipeline](#delivery-flow) · [Verified results](#6-results-and-evidence) · [Evidence index](#9-evidence-index-and-provenance)
+**Jump to** [Assignment deep dives](#assignment-deep-dives) · [All 15 courses](#3-all-15-courses-in-the-case-study) · [Accounts API](#4-main-implementation-customer-accounts-service) · [Delivery pipeline](#delivery-flow) · [Verified results](#6-results-and-evidence) · [Evidence index](#9-evidence-index-and-provenance)
 
 ## Executive summary
 
@@ -39,6 +39,26 @@ The result is a learning portfolio with verifiable source code and CI outcomes. 
 | [CI/CD counter service](https://github.com/Soham-Moholkar/ibm-ci-cd-practice) | Isolate automation around a small REST service | GitHub Actions lint/test/image-build jobs, Tekton tasks and OpenShift deployment script. Recorded CI succeeded |
 | [DevOps capstone workspace](https://github.com/Soham-Moholkar/devops-capstone-project) | Retain the capstone starter and related work | Accounts model/service layout, tests and Tekton artifacts. The more complete reviewed delivery implementation is in `github-final-project` |
 | [Agile planning lab](https://github.com/Soham-Moholkar/lab-agile-planning) | Planning exercise repository | A README is present. The reviewed issue endpoint returned no issues, so the concrete planning evidence below comes from the Accounts repository |
+
+### Assignment deep dives
+
+#### Bash calculator and GitHub collaboration
+
+The simple-interest assignment gives the repository a small, predictable executable to document and share. The Bash script reads principal, time and annual rate interactively. It passes the calculation to `bc`, requests two decimal places and prints the interest amount. For example, a principal of 1,000 at 5% annually for two years yields 100. The related Python exercise uses compounding and returns the final amount, which is 1,102.50 for the same inputs. That difference illustrates why a project README should define the meaning of the output as well as give an example.
+
+The GitHub artifacts add the collaboration layer around those scripts. The README documents usage and assumptions, the license establishes reuse terms, and the contributing guide and issue templates give contributors a way to report and discuss changes. These files document a repository workflow. Individual review activity would require pull request records. [Bash assignment](https://github.com/Soham-Moholkar/github-final-project/blob/6cbfc82e8bbc9d1d37f9efa39db8526c758c3ae3/simple-interest.sh), [Git/GitHub exercise files](https://github.com/Soham-Moholkar/mcino-Introduction-to-Git-and-GitHub/tree/5cfed37446575ca6dd764e7a27b63a114dc379b3)
+
+#### Flask application with Watson NLP
+
+The Flask assignment separates three responsibilities. The browser captures text and displays the response. The Flask route reads `textToAnalyze` and builds the user-facing result. The Python adapter sends the text to the Skills Network Watson NLP service and maps the response to five emotion scores and a dominant emotion. An HTTP 400 from Watson takes the invalid-input path, and the Flask route displays a prompt to try again. Other upstream HTTP errors propagate through the adapter's error handling, so a service timeout or upstream outage remains a candidate for clearer user messaging.
+
+The included suite has one example for each of joy, anger, disgust, sadness and fear. These tests call the external service, so their outcome depends on network reachability and the lab endpoint. A practical next step would be to add local tests with recorded response fixtures for score extraction, invalid input and unexpected upstream responses, then keep a smaller live test for the integration. The reviewed files establish the app and its test cases. The portfolio does not claim that its live endpoint was exercised for this case study. [Browser code](https://github.com/Soham-Moholkar/oaqjp-final-project-emb-ai/blob/d947e795f4fa6e16c8ec849e249e93975a8ec96a/static/mywebscript.js), [Python adapter](https://github.com/Soham-Moholkar/oaqjp-final-project-emb-ai/blob/d947e795f4fa6e16c8ec849e249e93975a8ec96a/EmotionDetection/emotion_detection.py), [Five test cases](https://github.com/Soham-Moholkar/oaqjp-final-project-emb-ai/blob/d947e795f4fa6e16c8ec849e249e93975a8ec96a/test_emotion_detection.py)
+
+#### Counter microservice and CI/CD practice
+
+The counter lab keeps application state in a Python dictionary. A client creates a named counter at zero, increments it with `PUT`, reads its value or deletes it. The service returns 409 when a client reuses an existing name and 404 when a client reads or increments an unknown counter. Deletion returns 204 even if the counter is already absent. The in-memory design keeps the lab focused on delivery automation. State belongs to the process and disappears on restart.
+
+In the recorded Actions run, the lint and test job completed before the container-build job. The test log shows **9 passing tests and 99% reported coverage**, and the image job completed successfully. The workflow builds a commit-tagged image in the runner. Separately, the OpenShift Tekton definition orders workspace cleanup, clone, lint, tests, Buildah and deployment. Its shell entry point supplies the branch, image reference, workspace and service account, while the deployment task waits for rollout. Those cluster steps are defined in source. The recorded Actions image job establishes the build outcome. [Counter routes](https://github.com/Soham-Moholkar/ibm-ci-cd-practice/blob/d0e9be94bcc9423d07453a998222e078ba859890/service/routes.py), [Counter test log](https://github.com/Soham-Moholkar/ibm-ci-cd-practice/actions/runs/44327056109/job/134881065023), [Image build job](https://github.com/Soham-Moholkar/ibm-ci-cd-practice/actions/runs/44327056109/job/134881303094), [Tekton definition](https://github.com/Soham-Moholkar/ibm-ci-cd-practice/blob/d0e9be94bcc9423d07453a998222e078ba859890/.tekton/pipeline.yml)
 
 ## 3. All 15 courses in the case study
 
@@ -119,6 +139,32 @@ A customer-service representative needs to manage account details without changi
 | Delete | `DELETE /accounts/{id}` | Return 204, including repeated deletion |
 | Health | `GET /health` | Return 200 with process-level status |
 
+### Sprint plan and acceptance evidence
+
+| Sprint | What the backlog aimed to deliver | Acceptance examples | What a reviewer can inspect |
+| --- | --- | --- | --- |
+| 1 · Service | A reproducible environment and account read, list, update and delete operations | Read by ID returns the right account. Updating it persists changes. A deleted account can no longer be retrieved. | [Environment story](https://github.com/Soham-Moholkar/github-final-project/issues/1), [Account deletion story](https://github.com/Soham-Moholkar/github-final-project/issues/5), [API tests](https://github.com/Soham-Moholkar/github-final-project/blob/6cbfc82e8bbc9d1d37f9efa39db8526c758c3ae3/tests/test_routes.py) |
+| 2 · Quality and security | Consistent automated checks, security headers and CORS behaviour | A pushed commit runs lint and tests. An allowed preflight response permits JSON `PUT`. Response headers include the configured browser controls. | [CI story](https://github.com/Soham-Moholkar/github-final-project/issues/6), [Security story](https://github.com/Soham-Moholkar/github-final-project/issues/7), [Recorded CI](https://github.com/Soham-Moholkar/github-final-project/actions/runs/44360229468) |
+| 3 · Delivery | A Docker image, Kubernetes resources and cluster automation | The container is configured to run on port 8080 as a non-root user. Tekton can hand off a built image to Kubernetes and wait for rollout. | [Container story](https://github.com/Soham-Moholkar/github-final-project/issues/8), [Kubernetes story](https://github.com/Soham-Moholkar/github-final-project/issues/9), [CD story](https://github.com/Soham-Moholkar/github-final-project/issues/10), [Versioned deployment assets](https://github.com/Soham-Moholkar/github-final-project/tree/6cbfc82e8bbc9d1d37f9efa39db8526c758c3ae3/deploy) |
+
+### Example: follow one account through the service
+
+1. Send a JSON body with a synthetic name, email and address to `POST /accounts`. The client may omit `phone_number` and `date_joined`. The model supplies an empty phone value and defaults the join date to the current date.
+2. The route checks the request media type and calls the model's deserializer. SQLAlchemy persists the new record and assigns its integer ID. The route returns 201, the serialized account and a `Location` header for the new resource.
+3. Read that location and use `PUT /accounts/{id}` to send the full account representation with a revised address. A subsequent GET should return the new address with the original ID. A client updating another field should retain any original join date it wants to preserve, because the deserializer defaults an omitted date during update as well.
+4. Delete the resource. The first DELETE returns 204, a GET for the deleted ID returns 404, and repeating the DELETE still returns 204. This gives a client a stable response when retrying a deletion.
+
+| Input or condition | How the service responds | Coverage in the reviewed suite |
+| --- | --- | --- |
+| Request omits a required account field | Model validation leads to a structured 400 response | Invalid create and update cases |
+| `date_joined` is not a valid date | Model validation rejects the value | Invalid date model test |
+| Write uses an unsupported media type | Route returns 415 | Separate create and update cases |
+| Read or update targets an absent ID | Route returns 404 | Separate read and update cases |
+| Browser sends a preflight for a JSON PUT | Response exposes allowed methods and headers | CORS preflight regression case |
+| Unsupported HTTP method | Shared error handler returns a JSON 405 response | Unsupported method regression case |
+
+The model stores the join date as a database date and exposes it in the API as an ISO-formatted string. The route layer handles HTTP semantics and the model owns database operations. Shared error handlers keep the shape of error responses consistent. [Accounts model](https://github.com/Soham-Moholkar/github-final-project/blob/6cbfc82e8bbc9d1d37f9efa39db8526c758c3ae3/service/models.py), [Routes](https://github.com/Soham-Moholkar/github-final-project/blob/6cbfc82e8bbc9d1d37f9efa39db8526c758c3ae3/service/routes.py), [Error handlers](https://github.com/Soham-Moholkar/github-final-project/blob/6cbfc82e8bbc9d1d37f9efa39db8526c758c3ae3/service/common/error_handlers.py)
+
 ### Architecture and data flow
 
 1. A client sends an HTTP request to the Flask application.
@@ -153,6 +199,27 @@ flowchart LR
 
 The pipeline definition has an explicit 180-second rollout timeout. Its sample image reference uses a local registry and a mutable `latest` tag. Its Kaniko task permits an insecure registry, reflecting a lab configuration. A stronger release process would use a trusted registry, an immutable image digest, durable PostgreSQL configuration and a retained deployment record.
 
+### Environments and deployment handoffs
+
+| Environment | Database and runtime | Evidence or intended use |
+| --- | --- | --- |
+| Developer walkthrough | Python and Flask with a file-based SQLite database when following the local README | Quick review of the REST contract without provisioning PostgreSQL |
+| GitHub Actions | Python 3.9 and a PostgreSQL 15 service container on an Ubuntu 22.04 runner | Recorded lint, tests and coverage for the reviewed Accounts revision |
+| Tekton test task | Python 3.9 and in-memory SQLite | Defined pre-build check in the pipeline |
+| Kubernetes demonstration | Gunicorn on port 8080 with SQLite at `/tmp/accounts.db` | Defined lab runtime. The single replica uses process-level readiness and liveness checks. |
+
+The example PipelineRun selects the repository and branch, supplies an image destination and requests a 1 GiB shared workspace. That workspace carries the checkout into lint, test, build and deploy tasks. Kaniko uses the repository Dockerfile and pushes to the configured registry. The deploy task first applies the checked-in manifests, then selects the built image for the Accounts Deployment and waits for its rollout. The pipeline service account is bound to a namespace Role covering Deployments, ReplicaSets, Services and Pods. The application container has its own restrictions, including a non-root UID and dropped Linux capabilities. [Pipeline run configuration](https://github.com/Soham-Moholkar/github-final-project/blob/6cbfc82e8bbc9d1d37f9efa39db8526c758c3ae3/tekton/pipelinerun.yaml), [Namespace permissions](https://github.com/Soham-Moholkar/github-final-project/blob/6cbfc82e8bbc9d1d37f9efa39db8526c758c3ae3/tekton/rbac.yaml), [Deployment and probes](https://github.com/Soham-Moholkar/github-final-project/blob/6cbfc82e8bbc9d1d37f9efa39db8526c758c3ae3/deploy/deployment.yaml)
+
+A subsequent lab verification could capture the following evidence under one source revision:
+
+| Checkpoint | Expected signal |
+| --- | --- |
+| Source and build | The PipelineRun logs the checked-out commit, and the registry reports a digest for the image that was pushed |
+| Rollout | Kubernetes reports the Deployment available and the Pod ready, and the running image matches the built digest |
+| Service routing | The ClusterIP Service resolves an endpoint for the Accounts Pod, and `GET /health` returns 200 through that Service |
+| Application behaviour | A smoke test creates, reads and deletes a synthetic record, checks the expected HTTP status codes, and saves the results with the PipelineRun |
+| Data durability | A future PostgreSQL deployment preserves a synthetic record through Pod replacement. The checked-in SQLite demo does not provide that guarantee. |
+
 ### Decisions and tradeoffs
 
 | Decision | Benefit in this project | Tradeoff or follow-up |
@@ -166,9 +233,9 @@ The pipeline definition has an explicit 180-second rollout timeout. Its sample i
 
 ## 5. A concrete iteration: CI compatibility
 
-The reviewed history shows an initial API/security/CI commit whose Actions run failed, followed by a commit titled “Pin CI runner to Ubuntu 22.04 for course Python 3.9 compatibility.” The next recorded run succeeded, and subsequent reviewed runs also succeeded.
+The first reviewed Accounts workflow failed during **Set up Python**. The job log reports that the setup action could not find Python 3.9 for x64 Ubuntu 26.04. The job had already checked out the repository, but it skipped dependency installation, lint and tests. The failure therefore identified an environment issue before any application checks ran.
 
-This sequence supports a concrete learning point: the execution environment is part of reproducibility. A runner pin made the course environment explicit. The earlier failing job's detailed logs were not reviewed for this case, so the commit title and subsequent successful run establish the recorded response without asserting a fully diagnosed root cause. [Failed run](https://github.com/Soham-Moholkar/github-final-project/actions/runs/44353810897), [Runner change](https://github.com/Soham-Moholkar/github-final-project/commit/ff3d8b1e193cee773f6ea0f0c1eb6eff59f97904), [Subsequent successful run](https://github.com/Soham-Moholkar/github-final-project/actions/runs/44354205606)
+The next commit pinned the runner to Ubuntu 22.04 while retaining the course's Python 3.9 toolchain. The following recorded run succeeded. The later run reviewed in this study reached both Flake8 and the PostgreSQL-backed test suite, with zero lint findings and 33 passing tests. This sequence shows why the runner, application runtime and dependencies all belong in the reproducibility record. [Failed setup job](https://github.com/Soham-Moholkar/github-final-project/actions/runs/44353810897/job/134976363624), [Runner change](https://github.com/Soham-Moholkar/github-final-project/commit/ff3d8b1e193cee773f6ea0f0c1eb6eff59f97904), [First successful run after the fix](https://github.com/Soham-Moholkar/github-final-project/actions/runs/44354205606)
 
 ## 6. Results and evidence
 
@@ -179,7 +246,7 @@ This sequence supports a concrete learning point: the execution environment is p
 | Flake8 | 0 findings | Lint check for `service` and `tests` passed in the inspected job |
 | Planning backlog | 10 of 10 reviewed issues closed | Repository planning state, not independent runtime proof |
 | Account operations | Create, list, read, update, delete | Present in source and covered by the recorded tests |
-| Counter CI | Successful run | Its Actions workflow includes lint, tests and an image-build job |
+| Counter CI | 9 tests passed, 99% reported coverage and a successful image build | Historical Actions run for the independent counter assignment |
 | Container/deployment assets | Dockerfile, Deployment, Service and Tekton pipeline | Versioned implementation and deployment configuration |
 | Course completion | 15 courses, 97.13% mean grade | Reported by the supplied learning portfolio, separate from software test coverage |
 
@@ -221,6 +288,12 @@ Container and cluster review requires a compatible Docker/Kubernetes environment
 5. **Operate against explicit targets.** Add request/error/latency metrics, dependency-aware readiness, traces where useful, alert rules and an exercised rollback procedure.
 
 These are proposed improvements. They are not represented as completed project features.
+
+### What an operator would check first
+
+The repository already provides a process health endpoint, request logging and rollout checks. These answer different questions. If a new Pod never becomes ready, start with rollout status, Pod events, image pull status and application startup logs. If the Pod is ready but account requests fail, inspect routing and the application's database connection, then run a small synthetic Accounts transaction. The current `/health` response alone cannot establish that database operations work.
+
+A first monitoring baseline would track request count, server-error rate and latency by route pattern and status class. That would help distinguish a slow dependency from a deployment that simply lost traffic. Request IDs would let an operator correlate a failed request with its application log. Account names, emails and addresses should stay out of routine telemetry. Once there is usage data, use it to choose objectives and alert thresholds. During a release, record the pre-release baseline, compare the same indicators after rollout, and use the image digest to identify the version an operator could roll back to.
 
 ## 9. Evidence index and provenance
 
