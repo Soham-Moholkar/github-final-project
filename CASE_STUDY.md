@@ -8,6 +8,8 @@ Evidence reviewed: 19 November 2026
 >
 > **Verified capstone CI result:** 33 tests passed · 98% reported coverage · 0 Flake8 findings. These results describe one recorded CI execution, not production performance.
 
+**Jump to** [Project map](#2-project-map) · [All 15 courses](#3-all-15-courses-in-the-case-study) · [Accounts API](#4-main-implementation-customer-accounts-service) · [Delivery pipeline](#delivery-flow) · [Verified results](#6-results-and-evidence) · [Evidence index](#9-evidence-index-and-provenance)
+
 ## Executive summary
 
 The IBM learning programme covered 15 courses. The engineering challenge was to connect their individual practices into a delivery process that another developer could inspect and reproduce. A working API alone would not demonstrate that process. The portfolio also needed traceable requirements, repeatable tests, a defined runtime, security controls and a clear deployment path.
@@ -128,6 +130,22 @@ A customer-service representative needs to manage account details without changi
 PostgreSQL is the database used by GitHub Actions. The checked-in Kubernetes demo uses SQLite instead. That distinction matters: the CI run verifies PostgreSQL-backed behaviour, while the demo manifest prioritizes a self-contained lab setup over durable storage.
 
 ### Delivery flow
+
+```mermaid
+flowchart LR
+    subgraph CI["GitHub Actions · verified run"]
+        direction LR
+        A["Checkout"] --> B["Python and PostgreSQL"] --> C["Flake8"] --> D["Tests and coverage"]
+    end
+    subgraph CD["Tekton · deployment defined in source"]
+        direction LR
+        E["Clone"] --> F["Lint and test"] --> G["Build and push image"] --> H["Apply manifests"] --> I["Verify rollout"]
+    end
+    classDef ci fill:#e8effb,stroke:#1957ca,color:#0e2140
+    classDef cd fill:#e2f1f2,stroke:#007f81,color:#0e2140
+    class A,B,C,D ci
+    class E,F,G,H,I cd
+```
 
 **Continuous integration, executed:** GitHub push/PR → checkout → Python setup → PostgreSQL-backed dependency/test environment → Flake8 → nosetests and coverage gate.
 
