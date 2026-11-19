@@ -1,5 +1,9 @@
 # DevOps Capstone: Customer Accounts Service
 
+## IBM DevOps case study
+
+[Read the complete 15-course case study](CASE_STUDY.md), covering the Accounts capstone, Git/GitHub assignments, Flask and Watson NLP, CI/CD, security, containerization and deployment definitions. Includes verified CI results, architecture, decisions, limitations and links to source evidence.
+
 [![CI Build](https://github.com/Soham-Moholkar/github-final-project/actions/workflows/ci-build.yaml/badge.svg)](https://github.com/Soham-Moholkar/github-final-project/actions/workflows/ci-build.yaml)
 
 An Accounts REST microservice based on the official IBM DevOps capstone starter. It supports CREATE, LIST, READ, UPDATE and DELETE, includes Talisman security headers and CORS, and runs on port 8080.
